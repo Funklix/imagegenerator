@@ -1,14 +1,51 @@
+"use client";
+
+import { useState } from "react";
+import { SpeakerForm, type SpeakerDetails } from "@/components/SpeakerForm";
+import { SpeakerPreview } from "@/components/SpeakerPreview";
+import { theme, themeVariables } from "@/config/theme";
+
+const initialSpeaker: SpeakerDetails = {
+  name: "Max Mustermann",
+  jobTitle: "Geschäftsführer",
+  company: "Musterstiftung",
+  topic: "Digitale Kommunikation für Stiftungen",
+};
+
 export default function Home() {
+  const [speaker, setSpeaker] = useState<SpeakerDetails>(initialSpeaker);
+
+  function updateSpeaker(field: keyof SpeakerDetails, value: string) {
+    setSpeaker((current) => ({ ...current, [field]: value }));
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-16">
-      <div className="text-center">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Speaker Image Generator
-        </h1>
-        <p className="mt-3 text-base text-neutral-600 sm:text-lg">
-          Event speaker asset creation tool.
-        </p>
-      </div>
-    </main>
+    <div className="app-shell" style={themeVariables}>
+      <header className="site-header">
+        <div className="header-inner">
+          <div className="wordmark">
+            <span className="wordmark-mark" aria-hidden="true" />
+            <span>{theme.brandName}</span>
+          </div>
+          <p className="context-label">Speaker Asset Generator</p>
+        </div>
+      </header>
+
+      <main className="main-content">
+        <section className="intro" aria-labelledby="page-title">
+          <p className="eyebrow">Social-Media-Motiv</p>
+          <h1 id="page-title">Dein Speaker-Motiv erstellen</h1>
+          <p className="intro-copy">
+            Trage deine Speaker-Daten ein. Im nächsten Schritt ergänzt du dein
+            Foto und erhältst dein fertiges Social-Media-Motiv.
+          </p>
+        </section>
+
+        <div className="workspace">
+          <SpeakerForm values={speaker} onChange={updateSpeaker} />
+          <SpeakerPreview speaker={speaker} />
+        </div>
+      </main>
+    </div>
   );
 }
