@@ -2,13 +2,14 @@ import type { SpeakerDetails } from "@/components/SpeakerForm";
 
 type SpeakerPreviewProps = {
   speaker: SpeakerDetails;
+  photoUrl: string | null;
 };
 
 function displayValue(value: string, fallback: string) {
   return value.trim() || fallback;
 }
 
-export function SpeakerPreview({ speaker }: SpeakerPreviewProps) {
+export function SpeakerPreview({ speaker, photoUrl }: SpeakerPreviewProps) {
   return (
     <section className="preview-panel" aria-labelledby="preview-title">
       <div className="preview-heading">
@@ -25,9 +26,21 @@ export function SpeakerPreview({ speaker }: SpeakerPreviewProps) {
           <span className="artwork-edition">Dialog 2026</span>
         </div>
 
-        <div className="portrait-placeholder" aria-hidden="true">
-          <span className="portrait-head" />
-          <span className="portrait-body" />
+        <div className="portrait-placeholder" aria-hidden={!photoUrl}>
+          {photoUrl ? (
+            // The object URL is local and cannot use Next.js image optimization.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              className="portrait-photo"
+              src={photoUrl}
+              alt={`Portrait von ${displayValue(speaker.name, "der Speaker-Person")}`}
+            />
+          ) : (
+            <>
+              <span className="portrait-head" />
+              <span className="portrait-body" />
+            </>
+          )}
         </div>
 
         <div className="artwork-copy">

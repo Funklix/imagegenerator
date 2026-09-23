@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SpeakerForm, type SpeakerDetails } from "@/components/SpeakerForm";
 import { SpeakerPreview } from "@/components/SpeakerPreview";
 import { theme, themeVariables } from "@/config/theme";
@@ -14,9 +14,24 @@ const initialSpeaker: SpeakerDetails = {
 
 export default function Home() {
   const [speaker, setSpeaker] = useState<SpeakerDetails>(initialSpeaker);
+  const [photo, setPhoto] = useState<{ url: string; fileName: string } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    return () => {
+      if (photo) {
+        URL.revokeObjectURL(photo.url);
+      }
+    };
+  }, [photo]);
 
   function updateSpeaker(field: keyof SpeakerDetails, value: string) {
     setSpeaker((current) => ({ ...current, [field]: value }));
+  }
+
+  function selectPhoto(file: File) {
+    setPhoto({ url: URL.createObjectURL(file), fileName: file.name });
   }
 
   return (
@@ -36,14 +51,20 @@ export default function Home() {
           <p className="eyebrow">Social-Media-Motiv</p>
           <h1 id="page-title">Dein Speaker-Motiv erstellen</h1>
           <p className="intro-copy">
-            Trage deine Speaker-Daten ein. Im nächsten Schritt ergänzt du dein
-            Foto und erhältst dein fertiges Social-Media-Motiv.
+            Trage deine Speaker-Daten ein und ergänze dein Foto für eine direkte
+            Vorschau deines Social-Media-Motivs.
           </p>
         </section>
 
         <div className="workspace">
-          <SpeakerForm values={speaker} onChange={updateSpeaker} />
-          <SpeakerPreview speaker={speaker} />
+          <SpeakerForm
+            values={speaker}
+            onChange={updateSpeaker}
+            photoFileName={photo?.fileName ?? null}
+            onPhotoSelect={selectPhoto}
+            onPhotoRemove={() => setPhoto(null)}
+          />
+          <SpeakerPreview speaker={speaker} photoUrl={photo?.url ?? null} />
         </div>
       </main>
     </div>

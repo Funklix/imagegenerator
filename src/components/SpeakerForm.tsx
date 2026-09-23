@@ -1,3 +1,5 @@
+import { PhotoUpload } from "@/components/PhotoUpload";
+
 export type SpeakerDetails = {
   name: string;
   jobTitle: string;
@@ -8,6 +10,9 @@ export type SpeakerDetails = {
 type SpeakerFormProps = {
   values: SpeakerDetails;
   onChange: (field: keyof SpeakerDetails, value: string) => void;
+  photoFileName: string | null;
+  onPhotoSelect: (file: File) => void;
+  onPhotoRemove: () => void;
 };
 
 const fields: Array<{
@@ -41,7 +46,13 @@ const fields: Array<{
   },
 ];
 
-export function SpeakerForm({ values, onChange }: SpeakerFormProps) {
+export function SpeakerForm({
+  values,
+  onChange,
+  photoFileName,
+  onPhotoSelect,
+  onPhotoRemove,
+}: SpeakerFormProps) {
   return (
     <section className="form-panel" aria-labelledby="speaker-data-title">
       <div className="section-heading">
@@ -72,13 +83,20 @@ export function SpeakerForm({ values, onChange }: SpeakerFormProps) {
           ))}
         </div>
 
+        <PhotoUpload
+          fileName={photoFileName}
+          onSelect={onPhotoSelect}
+          onRemove={onPhotoRemove}
+        />
+
         <div className="form-footer">
           <button type="button" disabled aria-describedby="future-step-note">
-            Weiter zum Foto
+            Motiv weiter bearbeiten
             <span aria-hidden="true">→</span>
           </button>
           <p id="future-step-note" className="helper-text">
-            Deine Angaben bleiben während der Erstellung im Browser.
+            Deine Angaben und dein Foto bleiben in diesem Schritt lokal in
+            deinem Browser.
           </p>
         </div>
       </form>
