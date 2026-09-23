@@ -3,15 +3,15 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Speaker Image Generator",
-  description: "Event speaker asset creation tool.",
+  title: "Speaker-Motiv erstellen | stiftungsmarktplatz.eu",
+  description: "Erstelle dein gebrandetes Speaker-Motiv für Social Media.",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="de">
       <body>{children}</body>
     </html>
   );
