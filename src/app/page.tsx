@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { SpeakerForm, type SpeakerDetails } from "@/components/SpeakerForm";
 import { SpeakerPreview } from "@/components/SpeakerPreview";
 import { theme, themeVariables } from "@/config/theme";
+import {
+  DEFAULT_PORTRAIT_TRANSFORM,
+  type PortraitTransform,
+} from "@/lib/portraitTransform";
 
 const initialSpeaker: SpeakerDetails = {
   name: "Max Mustermann",
@@ -16,6 +20,9 @@ export default function Home() {
   const [speaker, setSpeaker] = useState<SpeakerDetails>(initialSpeaker);
   const [photo, setPhoto] = useState<{ url: string; fileName: string } | null>(
     null,
+  );
+  const [portraitTransform, setPortraitTransform] = useState<PortraitTransform>(
+    DEFAULT_PORTRAIT_TRANSFORM,
   );
 
   useEffect(() => {
@@ -32,6 +39,12 @@ export default function Home() {
 
   function selectPhoto(file: File) {
     setPhoto({ url: URL.createObjectURL(file), fileName: file.name });
+    setPortraitTransform(DEFAULT_PORTRAIT_TRANSFORM);
+  }
+
+  function removePhoto() {
+    setPhoto(null);
+    setPortraitTransform(DEFAULT_PORTRAIT_TRANSFORM);
   }
 
   return (
@@ -62,9 +75,16 @@ export default function Home() {
             onChange={updateSpeaker}
             photoFileName={photo?.fileName ?? null}
             onPhotoSelect={selectPhoto}
-            onPhotoRemove={() => setPhoto(null)}
+            onPhotoRemove={removePhoto}
+            portraitTransform={portraitTransform}
+            onPortraitTransformChange={setPortraitTransform}
           />
-          <SpeakerPreview speaker={speaker} photoUrl={photo?.url ?? null} />
+          <SpeakerPreview
+            speaker={speaker}
+            photoUrl={photo?.url ?? null}
+            portraitTransform={portraitTransform}
+            onPortraitTransformChange={setPortraitTransform}
+          />
         </div>
       </main>
     </div>
