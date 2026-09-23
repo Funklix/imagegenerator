@@ -1,4 +1,10 @@
 import { PhotoUpload } from "@/components/PhotoUpload";
+import {
+  DEFAULT_PORTRAIT_TRANSFORM,
+  MAX_PORTRAIT_SCALE,
+  MIN_PORTRAIT_SCALE,
+  type PortraitTransform,
+} from "@/lib/portraitTransform";
 
 export type SpeakerDetails = {
   name: string;
@@ -13,6 +19,8 @@ type SpeakerFormProps = {
   photoFileName: string | null;
   onPhotoSelect: (file: File) => void;
   onPhotoRemove: () => void;
+  portraitTransform: PortraitTransform;
+  onPortraitTransformChange: (transform: PortraitTransform) => void;
 };
 
 const fields: Array<{
@@ -52,6 +60,8 @@ export function SpeakerForm({
   photoFileName,
   onPhotoSelect,
   onPhotoRemove,
+  portraitTransform,
+  onPortraitTransformChange,
 }: SpeakerFormProps) {
   return (
     <section className="form-panel" aria-labelledby="speaker-data-title">
@@ -88,6 +98,38 @@ export function SpeakerForm({
           onSelect={onPhotoSelect}
           onRemove={onPhotoRemove}
         />
+
+        {photoFileName && (
+          <div className="portrait-controls">
+            <label htmlFor="portrait-scale">Bildgröße</label>
+            <input
+              id="portrait-scale"
+              type="range"
+              min={MIN_PORTRAIT_SCALE}
+              max={MAX_PORTRAIT_SCALE}
+              step="0.01"
+              value={portraitTransform.scale}
+              onChange={(event) =>
+                onPortraitTransformChange({
+                  ...portraitTransform,
+                  scale: Number(event.target.value),
+                })
+              }
+            />
+            <p className="portrait-help">
+              Ziehe dein Foto im Motiv an die gewünschte Position.
+            </p>
+            <button
+              className="portrait-reset"
+              type="button"
+              onClick={() =>
+                onPortraitTransformChange(DEFAULT_PORTRAIT_TRANSFORM)
+              }
+            >
+              Position zurücksetzen
+            </button>
+          </div>
+        )}
 
         <div className="form-footer">
           <button type="button" disabled aria-describedby="future-step-note">
