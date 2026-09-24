@@ -9,7 +9,7 @@ import {
   type SetStateAction,
 } from "react";
 import type { SpeakerDetails } from "@/components/SpeakerForm";
-import { artworkCssVariables } from "@/config/artwork";
+import { ARTWORK_SIZE, artwork, artworkCssVariables } from "@/config/artwork";
 import {
   clampPortraitTransform,
   getCoveredImageDimensions,
@@ -22,7 +22,6 @@ type SpeakerPreviewProps = {
   portraitTransform: PortraitTransform;
   onPortraitTransformChange: Dispatch<SetStateAction<PortraitTransform>>;
   onPhotoReadyChange: (ready: boolean) => void;
-  onPortraitSizeChange: (dimensions: Dimensions) => void;
 };
 
 type Dimensions = { width: number; height: number };
@@ -37,17 +36,17 @@ export function SpeakerPreview({
   portraitTransform,
   onPortraitTransformChange,
   onPhotoReadyChange,
-  onPortraitSizeChange,
 }: SpeakerPreviewProps) {
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     pointerId: number;
     clientX: number;
     clientY: number;
   } | null>(null);
-  const [viewport, setViewport] = useState<Dimensions>({ width: 0, height: 0 });
+  const [displayScale, setDisplayScale] = useState(0);
   const [image, setImage] = useState<Dimensions>({ width: 0, height: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const viewport = artwork.portrait;
   const coveredImage = getCoveredImageDimensions(viewport, image);
   const displayedTransform = clampPortraitTransform(
     portraitTransform,
@@ -56,24 +55,20 @@ export function SpeakerPreview({
   );
 
   useEffect(() => {
-    const element = viewportRef.current;
+    const element = wrapperRef.current;
 
     if (!element) return;
 
     const updateViewport = () => {
-      const { width, height } = element.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        const dimensions = { width, height };
-        setViewport(dimensions);
-        onPortraitSizeChange(dimensions);
-      }
+      const { width } = element.getBoundingClientRect();
+      if (width > 0) setDisplayScale(width / ARTWORK_SIZE);
     };
 
     updateViewport();
     const observer = new ResizeObserver(updateViewport);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [onPortraitSizeChange, photoUrl]);
+  }, []);
 
   useEffect(() => {
     if (!coveredImage) return;
@@ -103,8 +98,9 @@ export function SpeakerPreview({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
 
-    const deltaX = event.clientX - drag.clientX;
-    const deltaY = event.clientY - drag.clientY;
+    if (displayScale <= 0) return;
+    const deltaX = (event.clientX - drag.clientX) / displayScale;
+    const deltaY = (event.clientY - drag.clientY) / displayScale;
     drag.clientX = event.clientX;
     drag.clientY = event.clientY;
 
@@ -132,79 +128,83 @@ export function SpeakerPreview({
         <span className="format-label">1:1 Format</span>
       </div>
 
-      <div
-        className="artwork"
-        style={artworkCssVariables}
-        aria-label="Vorschau des Speaker-Motivs"
-      >
-        <div className="artwork-topline">
-          <span>Stiftungs­marktplatz</span>
-          <span className="artwork-edition">Dialog 2026</span>
-        </div>
-
+      <div ref={wrapperRef} className="artwork-wrapper">
         <div
-          ref={viewportRef}
-          className={`portrait-placeholder${photoUrl ? " is-adjustable" : ""}${isDragging ? " is-dragging" : ""}`}
-          aria-hidden={!photoUrl}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={finishDrag}
-          onPointerCancel={finishDrag}
-          onLostPointerCapture={finishDrag}
+          className="artwork"
+          style={{
+            ...artworkCssVariables,
+            transform: `scale(${displayScale})`,
+          }}
+          aria-label="Vorschau des Speaker-Motivs"
         >
-          {photoUrl ? (
-            <div
-              className="portrait-photo-frame"
-              style={{
-                left: `calc(50% + ${displayedTransform.x}px)`,
-                top: `calc(50% + ${displayedTransform.y}px)`,
-                width: coveredImage?.width,
-                height: coveredImage?.height,
-              }}
-            >
-              {/* The object URL is local and cannot use Next.js image optimization. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                className="portrait-photo"
-                src={photoUrl}
-                alt={`Portrait von ${displayValue(speaker.name, "der Speaker-Person")}`}
-                draggable={false}
-                onLoad={(event) => {
-                  setImage({
-                    width: event.currentTarget.naturalWidth,
-                    height: event.currentTarget.naturalHeight,
-                  });
-                  onPhotoReadyChange(true);
+          <div className="artwork-topline">
+            <span>Stiftungs­marktplatz</span>
+            <span className="artwork-edition">Dialog 2026</span>
+          </div>
+
+          <div
+            className={`portrait-placeholder${photoUrl ? " is-adjustable" : ""}${isDragging ? " is-dragging" : ""}`}
+            aria-hidden={!photoUrl}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={finishDrag}
+            onPointerCancel={finishDrag}
+            onLostPointerCapture={finishDrag}
+          >
+            {photoUrl ? (
+              <div
+                className="portrait-photo-frame"
+                style={{
+                  left: `calc(50% + ${displayedTransform.x}px)`,
+                  top: `calc(50% + ${displayedTransform.y}px)`,
+                  width: coveredImage?.width,
+                  height: coveredImage?.height,
                 }}
-                onError={() => onPhotoReadyChange(false)}
-                style={{ transform: `scale(${displayedTransform.scale})` }}
-              />
-            </div>
-          ) : (
-            <>
-              <span className="portrait-head" />
-              <span className="portrait-body" />
-            </>
-          )}
-        </div>
+              >
+                {/* The object URL is local and cannot use Next.js image optimization. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="portrait-photo"
+                  src={photoUrl}
+                  alt={`Portrait von ${displayValue(speaker.name, "der Speaker-Person")}`}
+                  draggable={false}
+                  onLoad={(event) => {
+                    setImage({
+                      width: event.currentTarget.naturalWidth,
+                      height: event.currentTarget.naturalHeight,
+                    });
+                    onPhotoReadyChange(true);
+                  }}
+                  onError={() => onPhotoReadyChange(false)}
+                  style={{ transform: `scale(${displayedTransform.scale})` }}
+                />
+              </div>
+            ) : (
+              <>
+                <span className="portrait-head" />
+                <span className="portrait-body" />
+              </>
+            )}
+          </div>
 
-        <div className="artwork-copy">
-          <p className="artwork-label">Speaker</p>
-          <h3>{displayValue(speaker.name, "Dein Name")}</h3>
-          <p className="speaker-role">
-            {displayValue(speaker.jobTitle, "Dein Jobtitel")}
-            <span aria-hidden="true"> · </span>
-            {displayValue(speaker.company, "Dein Unternehmen")}
-          </p>
-          <div className="topic-rule" />
-          <p className="topic">
-            {displayValue(speaker.topic, "Dein Speaker-Thema")}
-          </p>
-        </div>
+          <div className="artwork-copy">
+            <p className="artwork-label">Speaker</p>
+            <h3>{displayValue(speaker.name, "Dein Name")}</h3>
+            <p className="speaker-role">
+              {displayValue(speaker.jobTitle, "Dein Jobtitel")}
+              <span aria-hidden="true"> · </span>
+              {displayValue(speaker.company, "Dein Unternehmen")}
+            </p>
+            <div className="topic-rule" />
+            <p className="topic">
+              {displayValue(speaker.topic, "Dein Speaker-Thema")}
+            </p>
+          </div>
 
-        <div className="artwork-footer">
-          <span>Impulse, die weiterbringen.</span>
-          <span aria-hidden="true">SM</span>
+          <div className="artwork-footer">
+            <span>Impulse, die weiterbringen.</span>
+            <span aria-hidden="true">SM</span>
+          </div>
         </div>
       </div>
 
