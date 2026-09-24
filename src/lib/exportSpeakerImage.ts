@@ -1,5 +1,12 @@
 import type { SpeakerDetails } from "@/components/SpeakerForm";
-import { ARTWORK_SIZE, artwork } from "@/config/artwork";
+import {
+  ARTWORK_SIZE,
+  artwork,
+  portraitLayer,
+  type ArtworkLayer,
+  type ArtworkTextSource,
+  type TextLayer,
+} from "@/config/artwork";
 import {
   clampPortraitTransform,
   getCoveredImageDimensions,
@@ -10,6 +17,13 @@ type ExportSpeakerImageOptions = {
   speaker: SpeakerDetails;
   photoUrl: string;
   portraitTransform: PortraitTransform;
+};
+
+const staticText: Record<Exclude<ArtworkTextSource, "name" | "role" | "topic">, string> = {
+  brand: "Stiftungsmarktplatz",
+  edition: "Dialog 2026",
+  eventWord: "DIALOG",
+  speakerLabel: "Speaker",
 };
 
 function loadImage(source: string) {
@@ -30,15 +44,17 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
   });
 }
 
-function wrapText(
-  context: CanvasRenderingContext2D,
-  text: string,
-  maximumWidth: number,
-) {
+function layerText(source: ArtworkTextSource, speaker: SpeakerDetails) {
+  if (source === "name") return speaker.name;
+  if (source === "role") return `${speaker.jobTitle} · ${speaker.company}`;
+  if (source === "topic") return speaker.topic;
+  return staticText[source];
+}
+
+function wrapText(context: CanvasRenderingContext2D, text: string, maximumWidth: number) {
   const words = text.trim().split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = "";
-
   for (const word of words) {
     const candidate = line ? `${line} ${word}` : word;
     if (line && context.measureText(candidate).width > maximumWidth) {
@@ -52,180 +68,97 @@ function wrapText(
   return lines;
 }
 
-function drawLines(
-  context: CanvasRenderingContext2D,
-  lines: string[],
-  x: number,
-  y: number,
-  lineHeight: number,
-) {
-  lines.forEach((line, index) => context.fillText(line, x, y + index * lineHeight));
-  return y + Math.max(lines.length, 1) * lineHeight;
+function drawTextLayer(context: CanvasRenderingContext2D, layer: TextLayer, speaker: SpeakerDetails) {
+  const family = artwork.typography[layer.fontFamily];
+  context.save();
+  context.textBaseline = "top";
+  context.textAlign = "left";
+  context.font = `${layer.fontWeight} ${layer.fontSize}px ${family}`;
+  context.letterSpacing = `${layer.letterSpacing ?? 0}px`;
+  const text = layer.uppercase ? layerText(layer.source, speaker).toUpperCase() : layerText(layer.source, speaker);
+  const lines = wrapText(context, text, layer.width);
+  lines.forEach((line, index) => {
+    const y = layer.y + index * layer.lineHeight;
+    if (layer.stroke) {
+      context.strokeStyle = layer.stroke.color;
+      context.lineWidth = layer.stroke.width;
+      context.strokeText(line, layer.x, y);
+    }
+    if (layer.color !== "transparent") {
+      context.fillStyle = layer.color;
+      context.fillText(line, layer.x, y);
+    }
+  });
+  context.restore();
 }
 
-function drawArtworkBackground(context: CanvasRenderingContext2D) {
-  const size = ARTWORK_SIZE;
-  context.fillStyle = artwork.colors.background;
-  context.fillRect(0, 0, size, size);
-
-  const ring = artwork.decorations.ring;
-  context.strokeStyle = artwork.colors.accent;
-  context.lineWidth = ring.border;
-  context.beginPath();
-  context.arc(
-    ring.x,
-    ring.y,
-    ring.size / 2 - ring.border / 2,
-    0,
-    Math.PI * 2,
-  );
-  context.stroke();
-
-  const circle = artwork.decorations.circle;
-  context.fillStyle = artwork.colors.secondary;
-  context.beginPath();
-  context.arc(
-    circle.x,
-    circle.y,
-    circle.size / 2,
-    0,
-    Math.PI * 2,
-  );
-  context.fill();
-}
-
-function drawPortrait(
-  context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  transform: PortraitTransform,
-) {
-  const bounds = artwork.portrait;
-  const imageDimensions = {
-    width: image.naturalWidth,
-    height: image.naturalHeight,
-  };
-  const clamped = clampPortraitTransform(transform, bounds, imageDimensions);
-  const covered = getCoveredImageDimensions(bounds, imageDimensions);
+function drawPortrait(context: CanvasRenderingContext2D, image: HTMLImageElement, transform: PortraitTransform) {
+  const imageDimensions = { width: image.naturalWidth, height: image.naturalHeight };
+  const clamped = clampPortraitTransform(transform, portraitLayer, imageDimensions);
+  const covered = getCoveredImageDimensions(portraitLayer, imageDimensions);
   if (!covered) throw new Error("The portrait has invalid dimensions.");
-
   const width = covered.width * clamped.scale;
   const height = covered.height * clamped.scale;
-  const centerX = bounds.x + bounds.width / 2 + clamped.x;
-  const centerY = bounds.y + bounds.height / 2 + clamped.y;
-
+  const centerX = portraitLayer.x + portraitLayer.width / 2 + clamped.x;
+  const centerY = portraitLayer.y + portraitLayer.height / 2 + clamped.y;
   context.save();
   context.beginPath();
-  context.rect(bounds.x, bounds.y, bounds.width, bounds.height);
+  context.rect(portraitLayer.x, portraitLayer.y, portraitLayer.width, portraitLayer.height);
   context.clip();
   context.drawImage(image, centerX - width / 2, centerY - height / 2, width, height);
   context.restore();
 }
 
-function drawArtworkText(context: CanvasRenderingContext2D, speaker: SpeakerDetails) {
-  const size = ARTWORK_SIZE;
-  const header = artwork.header;
-  context.fillStyle = artwork.colors.text;
-  context.textBaseline = "top";
-
-  context.font = `700 ${header.brandFontSize}px ${artwork.typography.sans}`;
-  context.fillText("Stiftungsmarktplatz", header.x, header.y);
-
-  const edition = "DIALOG 2026";
-  context.font = `700 ${header.editionFontSize}px ${artwork.typography.sans}`;
-  context.letterSpacing = `${header.editionFontSize * 0.1}px`;
-  const editionWidth = context.measureText(edition).width + header.editionPaddingX * 2;
-  context.strokeStyle = artwork.colors.subtleText;
-  context.lineWidth = 1;
-  context.strokeRect(
-    size - header.editionRight - editionWidth,
-    header.editionTop,
-    editionWidth,
-    header.editionHeight,
-  );
-  context.fillText(
-    edition,
-    size - header.editionRight - editionWidth + header.editionPaddingX,
-    header.y,
-  );
-  context.letterSpacing = "0px";
-
-  const copyX = artwork.copy.x;
-  const copyWidth = artwork.copy.width;
-  let y = artwork.copy.y;
-  context.fillStyle = artwork.colors.accent;
-  context.font = `700 ${artwork.copy.labelFontSize}px ${artwork.typography.sans}`;
-  context.letterSpacing = `${artwork.copy.labelFontSize * 0.15}px`;
-  context.fillText("SPEAKER", copyX, y);
-  context.letterSpacing = "0px";
-  y += artwork.copy.labelLineHeight + artwork.copy.labelGap;
-
-  context.fillStyle = artwork.colors.text;
-  context.font = `${artwork.typography.name.weight} ${artwork.typography.name.size}px ${artwork.typography.serif}`;
-  context.letterSpacing = `${artwork.typography.name.letterSpacing}px`;
-  y =
-    drawLines(
-      context,
-      wrapText(context, speaker.name, copyWidth),
-      copyX,
-      y,
-      artwork.typography.name.lineHeight,
-    ) + artwork.copy.nameGap;
-  context.letterSpacing = "0px";
-
-  context.font = `${artwork.typography.role.weight} ${artwork.typography.role.size}px ${artwork.typography.sans}`;
-  y = drawLines(
-    context,
-    wrapText(context, `${speaker.jobTitle} · ${speaker.company}`, copyWidth),
-    copyX,
-    y,
-    artwork.typography.role.lineHeight,
-  ) + artwork.copy.roleGap;
-
-  context.fillStyle = artwork.colors.secondary;
-  context.fillRect(copyX, y, artwork.copy.ruleWidth, artwork.copy.ruleHeight);
-  y += artwork.copy.ruleHeight + artwork.copy.ruleGap;
-  context.fillStyle = artwork.colors.text;
-  context.font = `${artwork.typography.topic.weight} ${artwork.typography.topic.size}px ${artwork.typography.sans}`;
-  drawLines(
-    context,
-    wrapText(context, speaker.topic, copyWidth),
-    copyX,
-    y,
-    artwork.typography.topic.lineHeight,
-  );
-
-  context.strokeStyle = artwork.colors.rule;
-  context.beginPath();
-  context.moveTo(artwork.footer.left, artwork.footer.ruleY);
-  context.lineTo(size - artwork.footer.right, artwork.footer.ruleY);
-  context.stroke();
-  context.font = `700 ${artwork.footer.fontSize}px ${artwork.typography.sans}`;
-  context.letterSpacing = `${artwork.footer.fontSize * 0.08}px`;
-  context.fillText(
-    "IMPULSE, DIE WEITERBRINGEN.",
-    artwork.footer.left,
-    artwork.footer.textY,
-  );
-  context.letterSpacing = "0px";
-
-  const markSize = artwork.footer.badgeSize;
-  context.fillStyle = artwork.colors.accent;
-  context.fillRect(artwork.footer.badgeX, artwork.footer.badgeY, markSize, markSize);
-  context.fillStyle = artwork.colors.background;
-  context.font = `700 ${artwork.footer.badgeFontSize}px ${artwork.typography.sans}`;
-  context.textAlign = "center";
-  context.fillText("SM", artwork.footer.badgeX + markSize / 2, artwork.footer.badgeY + 15);
-  context.textAlign = "start";
+function drawLayer(context: CanvasRenderingContext2D, layer: ArtworkLayer, speaker: SpeakerDetails, image: HTMLImageElement, transform: PortraitTransform) {
+  if (layer.type === "background") {
+    context.fillStyle = layer.color;
+    context.fillRect(0, 0, ARTWORK_SIZE, ARTWORK_SIZE);
+  } else if (layer.type === "shape") {
+    context.save();
+    context.globalAlpha = layer.opacity ?? 1;
+    context.fillStyle = layer.color;
+    context.beginPath();
+    if (layer.shape === "circle") context.ellipse(layer.x + layer.width / 2, layer.y + layer.height / 2, layer.width / 2, layer.height / 2, 0, 0, Math.PI * 2);
+    else context.rect(layer.x, layer.y, layer.width, layer.height);
+    context.fill();
+    if (layer.border) {
+      context.strokeStyle = layer.border.color;
+      context.lineWidth = layer.border.width;
+      context.stroke();
+    }
+    context.restore();
+  } else if (layer.type === "text") {
+    drawTextLayer(context, layer, speaker);
+  } else if (layer.type === "portrait") {
+    drawPortrait(context, image, transform);
+  } else if (layer.type === "rule") {
+    context.fillStyle = layer.color;
+    context.fillRect(layer.x, layer.y, layer.width, layer.height);
+  } else {
+    context.save();
+    context.strokeStyle = layer.ruleColor;
+    context.beginPath();
+    context.moveTo(layer.x, layer.y);
+    context.lineTo(layer.x + layer.width, layer.y);
+    context.stroke();
+    context.fillStyle = layer.color;
+    context.textBaseline = "top";
+    context.font = `700 ${layer.fontSize}px ${artwork.typography.sans}`;
+    context.letterSpacing = `${layer.fontSize * 0.08}px`;
+    context.fillText(layer.text, layer.x, layer.y + 20);
+    context.fillStyle = artwork.colors.accent;
+    context.fillRect(layer.badge.x, layer.badge.y, layer.badge.size, layer.badge.size);
+    context.fillStyle = artwork.colors.background;
+    context.font = `700 16px ${artwork.typography.sans}`;
+    context.letterSpacing = "0px";
+    context.textAlign = "center";
+    context.fillText(layer.badge.label, layer.badge.x + layer.badge.size / 2, layer.badge.y + 18);
+    context.restore();
+  }
 }
 
 export function createSpeakerFilename(name: string) {
-  const slug = name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   return `speaker-${slug || "motiv"}.png`;
 }
 
@@ -238,9 +171,7 @@ export async function exportSpeakerImage(options: ExportSpeakerImageOptions) {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Canvas is not available.");
 
-  drawArtworkBackground(context);
-  drawPortrait(context, image, options.portraitTransform);
-  drawArtworkText(context, options.speaker);
+  artwork.layers.forEach((layer) => drawLayer(context, layer, options.speaker, image, options.portraitTransform));
 
   const blob = await canvasToBlob(canvas);
   const objectUrl = URL.createObjectURL(blob);
