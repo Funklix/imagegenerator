@@ -9,6 +9,7 @@ import {
   type SetStateAction,
 } from "react";
 import type { SpeakerDetails } from "@/components/SpeakerForm";
+import { artworkCssVariables } from "@/config/artwork";
 import {
   clampPortraitTransform,
   getCoveredImageDimensions,
@@ -20,6 +21,8 @@ type SpeakerPreviewProps = {
   photoUrl: string | null;
   portraitTransform: PortraitTransform;
   onPortraitTransformChange: Dispatch<SetStateAction<PortraitTransform>>;
+  onPhotoReadyChange: (ready: boolean) => void;
+  onPortraitSizeChange: (dimensions: Dimensions) => void;
 };
 
 type Dimensions = { width: number; height: number };
@@ -33,6 +36,8 @@ export function SpeakerPreview({
   photoUrl,
   portraitTransform,
   onPortraitTransformChange,
+  onPhotoReadyChange,
+  onPortraitSizeChange,
 }: SpeakerPreviewProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
@@ -57,14 +62,18 @@ export function SpeakerPreview({
 
     const updateViewport = () => {
       const { width, height } = element.getBoundingClientRect();
-      if (width > 0 && height > 0) setViewport({ width, height });
+      if (width > 0 && height > 0) {
+        const dimensions = { width, height };
+        setViewport(dimensions);
+        onPortraitSizeChange(dimensions);
+      }
     };
 
     updateViewport();
     const observer = new ResizeObserver(updateViewport);
     observer.observe(element);
     return () => observer.disconnect();
-  }, [photoUrl]);
+  }, [onPortraitSizeChange, photoUrl]);
 
   useEffect(() => {
     if (!coveredImage) return;
@@ -123,7 +132,11 @@ export function SpeakerPreview({
         <span className="format-label">1:1 Format</span>
       </div>
 
-      <div className="artwork" aria-label="Vorschau des Speaker-Motivs">
+      <div
+        className="artwork"
+        style={artworkCssVariables}
+        aria-label="Vorschau des Speaker-Motivs"
+      >
         <div className="artwork-topline">
           <span>Stiftungs­marktplatz</span>
           <span className="artwork-edition">Dialog 2026</span>
@@ -156,12 +169,14 @@ export function SpeakerPreview({
                 src={photoUrl}
                 alt={`Portrait von ${displayValue(speaker.name, "der Speaker-Person")}`}
                 draggable={false}
-                onLoad={(event) =>
+                onLoad={(event) => {
                   setImage({
                     width: event.currentTarget.naturalWidth,
                     height: event.currentTarget.naturalHeight,
-                  })
-                }
+                  });
+                  onPhotoReadyChange(true);
+                }}
+                onError={() => onPhotoReadyChange(false)}
                 style={{ transform: `scale(${displayedTransform.scale})` }}
               />
             </div>

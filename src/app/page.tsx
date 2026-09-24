@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SpeakerForm, type SpeakerDetails } from "@/components/SpeakerForm";
 import { SpeakerPreview } from "@/components/SpeakerPreview";
 import { theme, themeVariables } from "@/config/theme";
@@ -8,6 +8,9 @@ import {
   DEFAULT_PORTRAIT_TRANSFORM,
   type PortraitTransform,
 } from "@/lib/portraitTransform";
+import { exportSpeakerImage } from "@/lib/exportSpeakerImage";
+
+type Dimensions = { width: number; height: number };
 
 const initialSpeaker: SpeakerDetails = {
   name: "Max Mustermann",
@@ -24,6 +27,13 @@ export default function Home() {
   const [portraitTransform, setPortraitTransform] = useState<PortraitTransform>(
     DEFAULT_PORTRAIT_TRANSFORM,
   );
+  const [isPhotoReady, setIsPhotoReady] = useState(false);
+  const [portraitSize, setPortraitSize] = useState<Dimensions>({
+    width: 0,
+    height: 0,
+  });
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -38,13 +48,56 @@ export default function Home() {
   }
 
   function selectPhoto(file: File) {
+    setExportError(null);
+    setIsPhotoReady(false);
     setPhoto({ url: URL.createObjectURL(file), fileName: file.name });
     setPortraitTransform(DEFAULT_PORTRAIT_TRANSFORM);
   }
 
   function removePhoto() {
+    setExportError(null);
+    setIsPhotoReady(false);
     setPhoto(null);
     setPortraitTransform(DEFAULT_PORTRAIT_TRANSFORM);
+  }
+
+  const handlePhotoReadyChange = useCallback((ready: boolean) => {
+    setIsPhotoReady(ready);
+  }, []);
+
+  const handlePortraitSizeChange = useCallback((dimensions: Dimensions) => {
+    setPortraitSize(dimensions);
+  }, []);
+
+  const hasRequiredDetails = Object.values(speaker).every(
+    (value) => value.trim().length > 0,
+  );
+  const canExport = Boolean(
+    photo &&
+      isPhotoReady &&
+      portraitSize.width > 0 &&
+      portraitSize.height > 0 &&
+      hasRequiredDetails,
+  );
+
+  async function handleExport() {
+    if (!photo || !canExport || isExporting) return;
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      await exportSpeakerImage({
+        speaker,
+        photoUrl: photo.url,
+        portraitTransform,
+        previewPortrait: portraitSize,
+      });
+    } catch {
+      setExportError(
+        "Das Motiv konnte nicht erstellt werden. Bitte versuche es erneut.",
+      );
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   return (
@@ -78,12 +131,18 @@ export default function Home() {
             onPhotoRemove={removePhoto}
             portraitTransform={portraitTransform}
             onPortraitTransformChange={setPortraitTransform}
+            canExport={canExport}
+            isExporting={isExporting}
+            exportError={exportError}
+            onExport={handleExport}
           />
           <SpeakerPreview
             speaker={speaker}
             photoUrl={photo?.url ?? null}
             portraitTransform={portraitTransform}
             onPortraitTransformChange={setPortraitTransform}
+            onPhotoReadyChange={handlePhotoReadyChange}
+            onPortraitSizeChange={handlePortraitSizeChange}
           />
         </div>
       </main>
