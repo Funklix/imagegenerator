@@ -21,6 +21,10 @@ type SpeakerFormProps = {
   onPhotoRemove: () => void;
   portraitTransform: PortraitTransform;
   onPortraitTransformChange: (transform: PortraitTransform) => void;
+  canExport: boolean;
+  isExporting: boolean;
+  exportError: string | null;
+  onExport: () => void;
 };
 
 const fields: Array<{
@@ -62,6 +66,10 @@ export function SpeakerForm({
   onPhotoRemove,
   portraitTransform,
   onPortraitTransformChange,
+  canExport,
+  isExporting,
+  exportError,
+  onExport,
 }: SpeakerFormProps) {
   return (
     <section className="form-panel" aria-labelledby="speaker-data-title">
@@ -132,11 +140,29 @@ export function SpeakerForm({
         )}
 
         <div className="form-footer">
-          <button type="button" disabled aria-describedby="future-step-note">
-            Motiv weiter bearbeiten
-            <span aria-hidden="true">→</span>
+          <button
+            type="button"
+            disabled={!canExport || isExporting}
+            aria-describedby={
+              exportError
+                ? "export-requirements privacy-note export-error"
+                : "export-requirements privacy-note"
+            }
+            onClick={onExport}
+          >
+            {isExporting ? "Motiv wird erstellt …" : "Motiv herunterladen"}
+            <span aria-hidden="true">↓</span>
           </button>
-          <p id="future-step-note" className="helper-text">
+          {exportError && (
+            <p id="export-error" className="export-error" role="alert">
+              {exportError}
+            </p>
+          )}
+          <p id="export-requirements" className="visually-hidden">
+            Für den Download werden alle Speaker-Daten und ein vollständig
+            geladenes Foto benötigt.
+          </p>
+          <p id="privacy-note" className="helper-text">
             Deine Angaben und dein Foto bleiben in diesem Schritt lokal in
             deinem Browser.
           </p>
