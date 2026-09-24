@@ -10,8 +10,6 @@ import {
 } from "@/lib/portraitTransform";
 import { exportSpeakerImage } from "@/lib/exportSpeakerImage";
 
-type Dimensions = { width: number; height: number };
-
 const initialSpeaker: SpeakerDetails = {
   name: "Max Mustermann",
   jobTitle: "Geschäftsführer",
@@ -28,10 +26,6 @@ export default function Home() {
     DEFAULT_PORTRAIT_TRANSFORM,
   );
   const [isPhotoReady, setIsPhotoReady] = useState(false);
-  const [portraitSize, setPortraitSize] = useState<Dimensions>({
-    width: 0,
-    height: 0,
-  });
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -65,18 +59,12 @@ export default function Home() {
     setIsPhotoReady(ready);
   }, []);
 
-  const handlePortraitSizeChange = useCallback((dimensions: Dimensions) => {
-    setPortraitSize(dimensions);
-  }, []);
-
   const hasRequiredDetails = Object.values(speaker).every(
     (value) => value.trim().length > 0,
   );
   const canExport = Boolean(
     photo &&
       isPhotoReady &&
-      portraitSize.width > 0 &&
-      portraitSize.height > 0 &&
       hasRequiredDetails,
   );
 
@@ -89,7 +77,6 @@ export default function Home() {
         speaker,
         photoUrl: photo.url,
         portraitTransform,
-        previewPortrait: portraitSize,
       });
     } catch {
       setExportError(
@@ -142,7 +129,6 @@ export default function Home() {
             portraitTransform={portraitTransform}
             onPortraitTransformChange={setPortraitTransform}
             onPhotoReadyChange={handlePhotoReadyChange}
-            onPortraitSizeChange={handlePortraitSizeChange}
           />
         </div>
       </main>
