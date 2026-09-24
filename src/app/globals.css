@@ -9,7 +9,7 @@
 }
 
 html {
-  background: #f7f5f0;
+  background: #f7f2e6;
 }
 
 body {
@@ -26,23 +26,25 @@ input {
 
 .app-shell {
   min-height: 100vh;
-  background: var(--background);
+  background:
+    linear-gradient(90deg, var(--background-strong) 0 7px, transparent 7px),
+    var(--background);
   color: var(--text-primary);
 }
 
 .site-header {
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-primary) 16%, var(--border));
+  background: color-mix(in srgb, var(--background) 92%, white);
 }
 
 .header-inner,
 .main-content {
-  width: min(1180px, calc(100% - 48px));
+  width: min(1200px, calc(100% - 64px));
   margin-inline: auto;
 }
 
 .header-inner {
-  min-height: 76px;
+  min-height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -60,11 +62,9 @@ input {
 }
 
 .wordmark-mark {
-  width: 18px;
-  height: 18px;
-  background: var(--brand-primary);
-  border: 5px solid var(--accent);
-  outline: 1px solid var(--brand-primary);
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(135deg, var(--brand-primary) 0 58%, var(--accent) 58%);
 }
 
 .context-label,
@@ -79,16 +79,23 @@ input {
 }
 
 .context-label {
-  color: var(--text-secondary);
+  color: var(--brand-primary);
+  letter-spacing: 0.16em;
 }
 
 .main-content {
-  padding-block: 72px 88px;
+  padding-block: 64px 88px;
 }
 
 .intro {
-  max-width: 720px;
-  margin-bottom: 44px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+  align-items: end;
+  gap: 56px;
+  max-width: none;
+  margin-bottom: 52px;
+  padding-bottom: 34px;
+  border-bottom: 1px solid var(--border-strong);
 }
 
 .eyebrow {
@@ -116,15 +123,15 @@ h1 {
   max-width: 680px;
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(42px, 5vw, 64px);
+  font-size: clamp(46px, 5vw, 68px);
   font-weight: 500;
   line-height: 1.02;
   letter-spacing: -0.045em;
 }
 
 .intro-copy {
-  max-width: 620px;
-  margin: 22px 0 0;
+  max-width: 390px;
+  margin: 0 0 4px;
   color: var(--text-secondary);
   font-size: 17px;
   line-height: 1.65;
@@ -132,9 +139,9 @@ h1 {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
+  grid-template-columns: minmax(360px, 0.78fr) minmax(480px, 1.22fr);
   align-items: start;
-  gap: clamp(28px, 5vw, 72px);
+  gap: clamp(40px, 6vw, 88px);
 }
 
 .form-panel,
@@ -143,9 +150,21 @@ h1 {
 }
 
 .form-panel {
-  padding: 34px;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  position: relative;
+  padding: 36px 34px 32px;
+  border-top: 4px solid var(--brand-primary);
+  background: color-mix(in srgb, var(--surface) 84%, var(--background));
+  box-shadow: 0 16px 44px rgba(50, 19, 63, 0.07);
+}
+
+.form-panel::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: 0;
+  width: 25%;
+  height: 4px;
+  background: var(--accent);
 }
 
 .section-heading,
@@ -158,14 +177,15 @@ h1 {
 
 .step-number {
   display: grid;
-  width: 43px;
-  height: 43px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid var(--accent);
-  color: var(--brand-secondary);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 15px;
+  background: var(--brand-primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
 }
 
 .section-heading h2,
@@ -179,7 +199,7 @@ h1 {
 
 .field-list {
   display: grid;
-  gap: 22px;
+  gap: 20px;
 }
 
 .field {
@@ -188,18 +208,19 @@ h1 {
 }
 
 .field label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.025em;
 }
 
 .field input {
   width: 100%;
-  height: 50px;
-  padding: 0 14px;
-  border: 1px solid var(--border);
+  height: 52px;
+  padding: 0 15px;
+  border: 1px solid var(--border-strong);
   border-radius: 0;
   outline: none;
-  background: #fcfbf9;
+  background: var(--surface-soft);
   color: var(--text-primary);
   font-size: 15px;
   transition:
@@ -209,7 +230,7 @@ h1 {
 }
 
 .field input:hover {
-  border-color: #b8b1a7;
+  border-color: color-mix(in srgb, var(--brand-primary) 45%, var(--border));
   background: var(--surface);
 }
 
@@ -226,21 +247,22 @@ h1 {
 
 .photo-upload {
   min-width: 0;
-  margin: 30px 0 0;
-  padding: 26px 0 0;
+  margin: 32px 0 0;
+  padding: 28px 0 0;
   border: 0;
   border-top: 1px solid var(--border);
 }
 
 .photo-upload legend {
-  padding: 26px 0 0;
+  padding: 28px 0 0;
   color: var(--text-primary);
-  font-size: 13px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
   font-weight: 700;
 }
 
 .photo-help {
-  margin: 8px 0 16px;
+  margin: 9px 0 18px;
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1.5;
@@ -266,11 +288,18 @@ h1 {
   padding: 0 15px;
   border: 1px solid var(--brand-primary);
   border-radius: 0;
-  background: var(--surface);
+  background: transparent;
   color: var(--brand-primary);
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.photo-select:hover,
+.photo-action:hover {
+  background: var(--brand-primary);
+  color: white;
 }
 
 .photo-input:focus-visible + .photo-select,
@@ -282,7 +311,10 @@ h1 {
 
 .photo-selection {
   display: grid;
-  gap: 12px;
+  gap: 14px;
+  padding: 15px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-soft);
 }
 
 .photo-filename {
@@ -318,8 +350,8 @@ h1 {
 }
 
 .photo-action:last-child {
-  border-color: var(--border);
-  color: var(--text-secondary);
+  border-color: color-mix(in srgb, var(--brand-primary) 35%, var(--border));
+  color: var(--brand-primary);
 }
 
 .photo-error {
@@ -347,7 +379,9 @@ h1 {
 .portrait-controls {
   display: grid;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 22px;
+  padding: 18px;
+  background: var(--surface-soft);
 }
 
 .portrait-controls > label {
@@ -357,6 +391,7 @@ h1 {
 
 .portrait-controls input[type="range"] {
   width: 100%;
+  height: 6px;
   accent-color: var(--brand-primary);
   cursor: pointer;
 }
@@ -376,7 +411,7 @@ h1 {
 
 .portrait-reset {
   width: fit-content;
-  min-height: 42px;
+  min-height: 34px;
   padding: 0;
   border: 0;
   border-bottom: 1px solid currentColor;
@@ -388,24 +423,29 @@ h1 {
 }
 
 .form-footer {
-  margin-top: 30px;
-  padding-top: 26px;
+  margin-top: 32px;
+  padding-top: 28px;
   border-top: 1px solid var(--border);
 }
 
 .form-footer button {
   width: 100%;
-  min-height: 52px;
+  min-height: 58px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 18px;
+  padding: 0 20px;
   border: 1px solid var(--brand-primary);
   border-radius: 0;
   background: var(--brand-primary);
   color: white;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
+}
+
+.form-footer button:not(:disabled):hover {
+  border-color: #5f1057;
+  background: #5f1057;
 }
 
 .form-footer button:disabled {
@@ -441,13 +481,14 @@ h1 {
 
 .preview-heading {
   justify-content: space-between;
-  margin: 3px 0 18px;
+  margin: 1px 0 20px;
+  padding-inline: 4px;
 }
 
 .format-label {
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
+  padding: 8px 11px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 24%, var(--border));
+  color: var(--brand-primary);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -459,7 +500,8 @@ h1 {
   width: 100%;
   aspect-ratio: 1;
   overflow: hidden;
-  box-shadow: 0 18px 50px rgba(31, 24, 38, 0.13);
+  outline: 10px solid color-mix(in srgb, var(--background-strong) 68%, white);
+  box-shadow: 0 24px 60px rgba(50, 19, 63, 0.18);
 }
 
 .artwork {
@@ -563,10 +605,20 @@ h1 {
 }
 
 .preview-note {
+  padding-top: 8px;
   text-align: center;
 }
 
-@media (max-width: 880px) {
+@media (max-width: 1020px) {
+  .intro {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .intro-copy {
+    max-width: 620px;
+  }
+
   .workspace {
     grid-template-columns: 1fr;
     gap: 48px;
@@ -581,7 +633,7 @@ h1 {
 @media (max-width: 600px) {
   .header-inner,
   .main-content {
-    width: min(100% - 32px, 1180px);
+    width: min(100% - 32px, 1200px);
   }
 
   .header-inner {
@@ -599,11 +651,12 @@ h1 {
   }
 
   .main-content {
-    padding-block: 46px 60px;
+    padding-block: 40px 56px;
   }
 
   .intro {
-    margin-bottom: 32px;
+    margin-bottom: 34px;
+    padding-bottom: 26px;
   }
 
   h1 {
@@ -616,7 +669,7 @@ h1 {
   }
 
   .form-panel {
-    padding: 24px 20px;
+    padding: 26px 20px 24px;
   }
 
   .section-heading {
@@ -639,6 +692,14 @@ h1 {
   .photo-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .photo-action {
+    padding-inline: 10px;
+  }
+
+  .artwork-wrapper {
+    outline-width: 6px;
   }
 
   .preview-heading h2,
