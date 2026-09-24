@@ -59,8 +59,13 @@ function geometryStyle(layer: { x: number; y: number; width: number; height?: nu
 }
 
 function textStyle(layer: TextLayer): CSSProperties {
+  const paddingX = layer.background?.paddingX ?? 0;
+  const paddingY = layer.background?.paddingY ?? 0;
+
   return {
-    ...geometryStyle(layer),
+    left: layer.x - paddingX,
+    top: layer.y - paddingY,
+    width: layer.width + paddingX * 2,
     color: layer.color,
     fontFamily: artwork.typography[layer.fontFamily],
     fontSize: layer.fontSize,
@@ -72,6 +77,24 @@ function textStyle(layer: TextLayer): CSSProperties {
       ? `${layer.stroke.width}px ${layer.stroke.color}`
       : undefined,
   };
+}
+
+function textContent(layer: TextLayer, speaker: SpeakerDetails) {
+  const text = layerText(layer.source, speaker);
+
+  if (!layer.background) return text;
+
+  return (
+    <span
+      className="text-highlight"
+      style={{
+        background: layer.background.color,
+        padding: `${layer.background.paddingY}px ${layer.background.paddingX}px`,
+      }}
+    >
+      {text}
+    </span>
+  );
 }
 
 export function SpeakerPreview({
@@ -145,7 +168,7 @@ export function SpeakerPreview({
       );
     }
     if (layer.type === "text") {
-      return <div key={layer.id} className="template-layer text-layer" style={textStyle(layer)}>{layerText(layer.source, speaker)}</div>;
+      return <div key={layer.id} className="template-layer text-layer" style={textStyle(layer)}>{textContent(layer, speaker)}</div>;
     }
     if (layer.type === "rule") {
       return <div key={layer.id} className="template-layer rule-layer" style={{ ...geometryStyle(layer), background: layer.color }} />;
