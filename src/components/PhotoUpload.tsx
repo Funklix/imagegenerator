@@ -56,8 +56,7 @@ export function PhotoUpload({
     <fieldset className="photo-upload" aria-describedby={error ? errorId : undefined}>
       <legend>Speaker-Foto</legend>
       <p className="photo-help">
-        Lade ein Portraitfoto hoch. Du kannst es im nächsten Schritt noch
-        positionieren und anpassen.
+        Lade ein Portraitfoto hoch und passe es direkt in der Vorschau an.
       </p>
 
       <input

@@ -78,7 +78,7 @@ export function SpeakerForm({
           01
         </span>
         <div>
-          <p className="section-kicker">Erster Schritt</p>
+          <p className="section-kicker">Deine Angaben</p>
           <h2 id="speaker-data-title">Speaker-Daten</h2>
         </div>
       </div>
