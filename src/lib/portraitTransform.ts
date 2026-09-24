@@ -1,5 +1,5 @@
 export const MIN_PORTRAIT_SCALE = 1;
-export const MAX_PORTRAIT_SCALE = 1.6;
+export const MAX_PORTRAIT_SCALE = 1.8;
 
 export type PortraitTransform = {
   x: number;
