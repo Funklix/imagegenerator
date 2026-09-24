@@ -79,6 +79,16 @@ function drawTextLayer(context: CanvasRenderingContext2D, layer: TextLayer, spea
   const lines = wrapText(context, text, layer.width);
   lines.forEach((line, index) => {
     const y = layer.y + index * layer.lineHeight;
+    if (layer.background) {
+      const textWidth = context.measureText(line).width;
+      context.fillStyle = layer.background.color;
+      context.fillRect(
+        layer.x - layer.background.paddingX,
+        y - layer.background.paddingY,
+        textWidth + layer.background.paddingX * 2,
+        layer.fontSize + layer.background.paddingY * 2,
+      );
+    }
     if (layer.stroke) {
       context.strokeStyle = layer.stroke.color;
       context.lineWidth = layer.stroke.width;

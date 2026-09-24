@@ -484,6 +484,11 @@ h1 {
   white-space: normal;
 }
 
+.text-highlight {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 .portrait-layer {
   overflow: hidden;
   opacity: 0.98;
